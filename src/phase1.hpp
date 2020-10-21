@@ -555,16 +555,8 @@ void* phase1_thread(THREADDATA* ptd)
     return 0;
 }
 
-#ifdef _WIN32
-DWORD WINAPI F1thread(LPVOID lpParameter)
+void* F1thread(THREADF1DATA* ptd)
 {
-    THREADF1DATA* ptd = (THREADF1DATA*)lpParameter;
-#else
-void* F1thread(void* arg)
-{
-    THREADF1DATA* ptd = (THREADF1DATA*)arg;
-#endif
-
     uint8_t k = ptd->k;
     uint32_t entry_size_bytes = 16;
 
@@ -587,7 +579,7 @@ void* F1thread(void* arg)
         uint64_t right_writer_count = 0;
         uint64_t x = lp * (1 << (kBatchSizes));
 
-        uint64_t loopcount = min(max_value - x, (uint64_t)1 << (kBatchSizes));
+        uint64_t loopcount = std::min(max_value - x, (uint64_t)1 << (kBatchSizes));
 
         // Instead of computing f1(1), f1(2), etc, for each x, we compute them in batches
         // to increase CPU efficency.
@@ -682,7 +674,7 @@ std::vector<uint64_t> RunPhase1(
             td[i].k = k;
             td[i].id = id;
 
-            threads.emplace_back(phase1_thread, &td[i]);
+            threads.emplace_back(F1thread, &td[i]);
         }
         Sem::Post(&mutex[globals.num_threads - 1]);
 
